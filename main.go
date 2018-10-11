@@ -81,7 +81,7 @@ func MasterWebsocketHandler() {
 
 			clients.Iterate(func(id string, client *WSClient) {
 				client.conn.WriteMessage(websocket.BinaryMessage,
-					[]byte(clientToDelete+" disconnected"))
+					[]byte(clientToDelete+" disconnected\n"))
 			})
 
 		case packet := <-broadcaster:

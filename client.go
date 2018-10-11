@@ -73,7 +73,7 @@ func (ws *WSClient) HandleWebsocketConnection() {
 		for {
 			select {
 			case packet := <-ws.out:
-				msg := append([]byte(packet.id), packet.data...)
+				msg := append([]byte(packet.id+": "), packet.data...)
 				err := ws.conn.WriteMessage(websocket.BinaryMessage, msg)
 				if err != nil {
 					log.Println(err)
