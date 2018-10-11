@@ -78,7 +78,7 @@ func MasterWebsocketHandler() {
 		select {
 		case clientToDelete := <-leave:
 			clients.Delete(clientToDelete)
-
+			log.Println("Client " + clientToDelete + "deleted")
 			clients.Iterate(func(id string, client *WSClient) {
 				client.conn.WriteMessage(websocket.BinaryMessage,
 					[]byte(clientToDelete+" disconnected\n"))
