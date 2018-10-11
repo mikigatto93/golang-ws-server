@@ -1,0 +1,12 @@
+{
+	"ImportPath": "httpserver",
+	"GoVersion": "go1.9",
+	"GodepVersion": "v79",
+	"Deps": [
+		{
+			"ImportPath": "github.com/gorilla/websocket",
+			"Comment": "v1.4.0-3-ga51a35a",
+			"Rev": "a51a35ae3232254685f26a0b6d995ca0e81e2248"
+		}
+	]
+}
