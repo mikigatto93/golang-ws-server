@@ -54,7 +54,7 @@ func getPort() string {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Go http server here!")
+	fmt.Fprintf(w, "Go http server here! Your public IP is: %s", r.RemoteAddr)
 }
 
 func handleWSRequest(w http.ResponseWriter, r *http.Request) {

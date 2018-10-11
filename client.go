@@ -15,6 +15,11 @@ type WSClient struct {
 	conn        *websocket.Conn
 }
 
+type packet struct {
+	id   string
+	data []byte
+}
+
 func NewWSClient(id string, broadcaster chan []byte, conn *websocket.Conn) *WSClient {
 	c := new(WSClient)
 	c.id = id
