@@ -19,7 +19,8 @@ var (
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
 	}
-	broadcaster = make(chan []byte)
+	broadcaster = make(chan Packet)
+	leave       = make(chan string)
 	clients     = NewConcurrentMap()
 )
 
@@ -66,7 +67,7 @@ func handleWSRequest(w http.ResponseWriter, r *http.Request) {
 
 	id := createSocketId(idValues)
 	log.Println("New connection: " + id)
-	client := NewWSClient(id, broadcaster, ws)
+	client := NewWSClient(id, broadcaster, leave, ws)
 	clients.Add(id, client)
 	client.HandleWebsocketConnection()
 
@@ -75,9 +76,19 @@ func handleWSRequest(w http.ResponseWriter, r *http.Request) {
 func MasterWebsocketHandler() {
 	for {
 		select {
-		case data := <-broadcaster:
+		case clientToDelete := <-leave:
+			clients.Delete(clientToDelete)
+
 			clients.Iterate(func(id string, client *WSClient) {
-				client.out <- data
+				client.conn.WriteMessage(websocket.BinaryMessage,
+					[]byte(clientToDelete+" disconnected"))
+			})
+
+		case packet := <-broadcaster:
+			clients.Iterate(func(id string, client *WSClient) {
+				if id != packet.id {
+					client.out <- packet
+				}
 			})
 		}
 	}

@@ -8,23 +8,27 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-type WSClient struct {
-	id          string
-	out         chan []byte
-	broadcaster chan []byte
-	conn        *websocket.Conn
-}
-
-type packet struct {
+type Packet struct {
 	id   string
 	data []byte
 }
 
-func NewWSClient(id string, broadcaster chan []byte, conn *websocket.Conn) *WSClient {
+type WSClient struct {
+	id          string
+	out         chan Packet
+	broadcaster chan Packet
+	leave       chan string
+	conn        *websocket.Conn
+}
+
+func NewWSClient(id string, broadcaster chan Packet,
+	leave chan string, conn *websocket.Conn) *WSClient {
+
 	c := new(WSClient)
 	c.id = id
-	c.out = make(chan []byte)
+	c.out = make(chan Packet)
 	c.broadcaster = broadcaster
+	c.leave = leave
 	c.conn = conn
 	return c
 }
@@ -40,6 +44,11 @@ func (ws *WSClient) HandleWebsocketConnection() {
 	// goroutine for receiving data from client
 	go func(ws *WSClient) {
 
+		defer func() {
+			ws.conn.Close()
+			ws.leave <- ws.id
+		}()
+
 		for {
 			_, data, err := ws.conn.ReadMessage()
 
@@ -48,7 +57,7 @@ func (ws *WSClient) HandleWebsocketConnection() {
 				break
 			}
 
-			ws.broadcaster <- data
+			ws.broadcaster <- Packet{id: ws.id, data: data}
 		}
 
 	}(ws)
@@ -56,10 +65,16 @@ func (ws *WSClient) HandleWebsocketConnection() {
 	// goroutine for sending messages to client from server
 	go func(ws *WSClient) {
 
+		defer func() {
+			ws.conn.Close()
+			ws.leave <- ws.id
+		}()
+
 		for {
 			select {
-			case data := <-ws.out:
-				err := ws.conn.WriteMessage(websocket.BinaryMessage, data)
+			case packet := <-ws.out:
+				msg := append([]byte(packet.id), packet.data...)
+				err := ws.conn.WriteMessage(websocket.BinaryMessage, msg)
 				if err != nil {
 					log.Println(err)
 					break
