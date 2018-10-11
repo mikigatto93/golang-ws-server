@@ -44,7 +44,7 @@ func createSocketId(vals []string) string {
 }
 
 func getPort() string {
-	var port = os.Getenv("PORT")
+	port := os.Getenv("PORT")
 	// Set a default port if there is nothing in the environment
 	if port == "" {
 		port = "8080"
@@ -91,7 +91,7 @@ func main() {
 	http.HandleFunc("/", handler)
 	http.HandleFunc("/ws", handleWSRequest)
 	fmt.Println("HTTP Server listening on port: " + port + "...")
-	err := http.ListenAndServe("localhost:"+port, nil)
+	err := http.ListenAndServe("0.0.0.0:"+port, nil)
 
 	if err != nil {
 		log.Fatalln(err)
