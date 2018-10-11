@@ -29,7 +29,7 @@ func shuffle(a []string) {
 		a[i], a[j] = a[j], a[i]
 	}
 }
-àpou
+
 func createSocketId(vals []string) string {
 
 	rand.Seed(time.Now().UnixNano())
