@@ -13,16 +13,22 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+const SOCKET_ID_LENGTH = 10
+
 var (
 	idValues []string = strings.Split("abcdefghilmnopqrstuvzABCDEFGHILMNOPQRSTUVZ1234567890xykjXYKJ", "")
-	upgrader          = websocket.Upgrader{
+	upgraderChat          = websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
+	}
+	upgraderFileStream = websocket.Upgrader{
+		ReadBufferSize: 
 	}
 	broadcaster = make(chan Packet)
 	leave       = make(chan string)
 	clients     = NewConcurrentMap()
 )
+
 
 func shuffle(a []string) {
 	for i := range a {
@@ -35,8 +41,8 @@ func createSocketId(vals []string) string {
 
 	rand.Seed(time.Now().UnixNano())
 	shuffle(vals)
-	id := make([]string, 10)
-	for i := 0; i < 10; i++ {
+	id := make([]string, SOCKET_ID_LENGTH)
+	for i := 0; i < SOCKET_ID_LENGTH; i++ {
 		index := rand.Intn(len(vals) - 1)
 		id[i] = vals[index]
 	}
@@ -60,7 +66,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 func handleWSRequest(w http.ResponseWriter, r *http.Request) {
 	// Upgrade http GET request to a websocket
-	ws, err := upgrader.Upgrade(w, r, nil)
+
+	ws, err := upgraderChat.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)
 	}
@@ -73,12 +80,25 @@ func handleWSRequest(w http.ResponseWriter, r *http.Request) {
 
 }
 
+/*func handleWSFileStream(w http.ResponseWriter, r *http.Request) {
+	//Set up new connection for streaming files
+	
+	fsws, err := upgraderFileStream.Upgrade(w, r, nil)
+	if err != nil {
+		log.Println(err)
+	}
+	
+	
+	
+}*/
+
 func MasterWebsocketHandler() {
 	for {
 		select {
 		case clientToDelete := <-leave:
 			clients.Delete(clientToDelete)
 			log.Println("Client " + clientToDelete + " deleted")
+
 			clients.Iterate(func(id string, client *WSClient) {
 				client.conn.WriteMessage(websocket.BinaryMessage,
 					[]byte(clientToDelete+" disconnected\n"))
@@ -101,11 +121,11 @@ func main() {
 
 	http.HandleFunc("/", handler)
 	http.HandleFunc("/ws", handleWSRequest)
+	//http.HandleFunc("/fs/ws", handleWSFileStream)
 	fmt.Println("HTTP Server listening on port: " + port + "...")
 	err := http.ListenAndServe("0.0.0.0:"+port, nil)
 
 	if err != nil {
 		log.Fatalln(err)
 	}
-
 }
